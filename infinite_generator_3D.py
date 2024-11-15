@@ -19,8 +19,8 @@ import warnings
 warnings.filterwarnings('ignore')
 import os
 import keras
-print("Keras = {}".format(keras.__version__))
-import tensorflow as tf
+# print("Keras = {}".format(keras.__version__))
+# import tensorflow as tf
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 import sys
@@ -36,6 +36,7 @@ from sklearn import metrics
 from optparse import OptionParser
 from glob import glob
 from skimage.transform import resize
+import h5py
 
 sys.setrecursionlimit(40000)
 
@@ -58,15 +59,19 @@ random.seed(seed)
 
 assert options.data is not None
 assert options.save is not None
-assert options.fold >= 0 and options.fold <= 9
+# assert options.fold >= 0 and options.fold <= 9
 
 if not os.path.exists(options.save):
     os.makedirs(options.save)
 
 class setup_config():
-    hu_max = 1000.0
-    hu_min = -1000.0
-    HU_thred = (-150.0 - hu_min) / (hu_max - hu_min)
+    # hu_max = 1000.0
+    # hu_min = -1000.0
+    # HU_thred = (-150.0 - hu_min) / (hu_max - hu_min)
+    #TODO what should HU-thred be?
+    hu_max = 4000.0
+    hu_min = 0.0
+    HU_thred = 0.0
     def __init__(self, 
                  input_rows=None, 
                  input_cols=None,
@@ -116,11 +121,13 @@ config = setup_config(input_rows=options.input_rows,
                       crop_rows=options.crop_rows,
                       crop_cols=options.crop_cols,
                       scale=options.scale,
-                      len_border=100,
-                      len_border_z=30,
+                      #TODO how to decide the following values, len_depth??? lung_max?
+                      len_border=5,
+                      len_border_z=5,
                       len_depth=3,
-                      lung_min=0.7,
-                      lung_max=0.15,
+                      lung_min=0.0,
+                      lung_max=1.35,
+                      ###
                       DATA_DIR=options.data,
                      )
 config.display()
@@ -129,10 +136,12 @@ def infinite_generator_from_one_volume(config, img_array):
     size_x, size_y, size_z = img_array.shape
     if size_z-config.input_deps-config.len_depth-1-config.len_border_z < config.len_border_z:
         return None
-    
-    img_array[img_array < config.hu_min] = config.hu_min
-    img_array[img_array > config.hu_max] = config.hu_max
-    img_array = 1.0*(img_array-config.hu_min) / (config.hu_max-config.hu_min)
+
+    # print("img_array before normalization: {} | {:.2f} ~ {:.2f}".format(img_array.shape, np.min(img_array), np.max(img_array)))
+    # img_array[img_array < config.hu_min] = config.hu_min
+    # img_array[img_array > config.hu_max] = config.hu_max
+    # img_array = 1.0*(img_array-config.hu_min) / (config.hu_max-config.hu_min)
+    # print("img_array after normalization: {} | {:.2f} ~ {:.2f}".format(img_array.shape, np.min(img_array), np.max(img_array)))
     
     slice_set = np.zeros((config.scale, config.input_rows, config.input_cols, config.input_deps), dtype=float)
     
@@ -207,15 +216,85 @@ def get_self_learning_data(fold, config):
             
     return np.array(slice_set)
 
+# for ADNI
+def get_self_learning_data_adni(config, train = True):
+    #train or validation
+    slice_set = []
+    if train:
+        data_path = os.path.join(config.DATA_DIR, "train.h5")
+    else:
+        data_path = os.path.join(config.DATA_DIR, "valid.h5")
+    
+    with h5py.File(data_path, mode='r') as file:
+        for name, group in file.items():
+            if name == "stats":
+                continue
+            mri_data = group['MRI/T1/data'][:]
+            img_array = mri_data[np.newaxis]
+            img_array = img_array.squeeze(0)
+            # print(img_array.shape)
+            # print(mri_data[np.newaxis].shape) (1, 113, 137, 113)
+            # image_data.append(mri_data[np.newaxis])
+            x = infinite_generator_from_one_volume(config, img_array)
+            if x is not None:
+                slice_set.extend(x)            
+    return np.array(slice_set)
 
-print(">> Fold {}".format(fold))
-cube = get_self_learning_data([fold], config)
+# for ADNI
+def get_self_learning_data_ukb(config, train=True):
+    #train or validation
+    slice_set = []
+    if train:
+        data_path = os.path.join(config.DATA_DIR, "uk_train.h5")
+    else:
+        data_path = os.path.join(config.DATA_DIR, "uk_valid.h5")
+    
+    with h5py.File(data_path, mode='r') as file:
+        for name, group in file.items():
+            if name == "stats":
+                continue
+            mri_data = group['MRI/T1/data'][:]
+            img_array = mri_data[np.newaxis]
+            img_array = img_array.squeeze(0)
+            # print(img_array.shape)
+            # print(mri_data[np.newaxis].shape) (1, 113, 137, 113)
+            # image_data.append(mri_data[np.newaxis])
+            x = infinite_generator_from_one_volume(config, img_array)
+            if x is not None:
+                slice_set.extend(x)            
+    return np.array(slice_set)
+
+# cube = get_self_learning_data_adni(config, train=False)
+cube = get_self_learning_data_ukb(config, train=False)
 print("cube: {} | {:.2f} ~ {:.2f}".format(cube.shape, np.min(cube), np.max(cube)))
 np.save(os.path.join(options.save, 
-                     "bat_"+str(config.scale)+
+                     "valid_"+str(config.scale)+
                      "_"+str(config.input_rows)+
                      "x"+str(config.input_cols)+
                      "x"+str(config.input_deps)+
-                     "_"+str(fold)+".npy"), 
+                     ".npy"), 
         cube,
        )
+
+# print(">> Fold {}".format(fold))
+# cube = get_self_learning_data([fold], config)
+# cube = get_self_learning_data_adni(config, train=True)
+cube = get_self_learning_data_ukb(config, train=True)
+print("cube: {} | {:.2f} ~ {:.2f}".format(cube.shape, np.min(cube), np.max(cube)))
+# np.save(os.path.join(options.save, 
+#                      "bat_"+str(config.scale)+
+#                      "_"+str(config.input_rows)+
+#                      "x"+str(config.input_cols)+
+#                      "x"+str(config.input_deps)+
+#                      "_"+str(fold)+".npy"), 
+#         cube,
+#        )
+np.save(os.path.join(options.save, 
+                     "train_"+str(config.scale)+
+                     "_"+str(config.input_rows)+
+                     "x"+str(config.input_cols)+
+                     "x"+str(config.input_deps)+
+                     ".npy"), 
+        cube,
+       )
+

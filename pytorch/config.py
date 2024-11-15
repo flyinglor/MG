@@ -3,16 +3,22 @@ import shutil
 
 class models_genesis_config:
     model = "Unet3D"
-    suffix = "genesis_chest_ct"
+    suffix = "MG"
     exp_name = model + "-" + suffix
     
     # data
-    data = "/mnt/dataset/shared/zongwei/LUNA16/Self_Learning_Cubes"
-    train_fold=[0,1,2,3,4]
-    valid_fold=[5,6]
-    test_fold=[7,8,9]
-    hu_min = -1000.0
-    hu_max = 1000.0
+    # data = "/mnt/dataset/shared/zongwei/LUNA16/Self_Learning_Cubes"
+    # train_fold=[0,1,2,3,4]
+    # valid_fold=[5,6]
+    # test_fold=[7,8,9]
+    data = "/dss/dssmcmlfs01/pr62la/pr62la-dss-0002/MSc/Hui/UKB_CAT12/generated_cubes"
+    train_fold=[5,6,7]
+    valid_fold=[8]
+    test_fold=[9]
+    hu_min = 0.0
+    hu_max = 4000.0
+    # hu_min = -1000.0
+    # hu_max = 1000.0
     scale = 32
     input_rows = 64
     input_cols = 64 
@@ -22,14 +28,15 @@ class models_genesis_config:
     # model pre-training
     verbose = 1
     weights = None
-    batch_size = 6
+    batch_size = 8
     optimizer = "sgd"
     workers = 10
     max_queue_size = workers * 4
     save_samples = "png"
-    nb_epoch = 10000
-    patience = 50
-    lr = 1
+    pretrain_epoch = 1000
+    nb_epoch = 100
+    patience = 100
+    lr = 5e-5
 
     # image deformation
     nonlinear_rate = 0.9
@@ -46,6 +53,14 @@ class models_genesis_config:
     logs_path = os.path.join(model_path, "Logs")
     if not os.path.exists(logs_path):
         os.makedirs(logs_path)
+
+    disable_wandb = False
+    dataset = "DZNE"
+    # dataset = "HOSPITAL"
+    # pretrain_dsname = "UKB"
+    pretrain_dsname = "ADNI"
+    checkpoint_dir = 'pretrained_weights/Genesis_ADNI_3_2.pt'
+    logs_path = "logs/"
     
     def display(self):
         """Display Configuration values."""
