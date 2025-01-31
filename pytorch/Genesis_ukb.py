@@ -17,6 +17,7 @@ import torchio as tio
 import h5py
 from torch.utils.tensorboard import SummaryWriter
 import wandb
+import os
 
 writer = SummaryWriter('logs')
 
@@ -173,7 +174,7 @@ for epoch in range(intial_epoch,conf.pretrain_epoch):
 		print("Validation loss does not decrease from {:.4f}, num_epoch_no_improvement {}".format(best_loss,num_epoch_no_improvement))
 		num_epoch_no_improvement += 1
 	#save the last model
-	if epoch+1 == conf.pretrain_epoch:
+	if (epoch+1)%10 == 0 and epoch+1 == conf.pretrain_epoch:
 		torch.save({
 			'epoch': epoch+1,
 			'state_dict' : model.state_dict(),

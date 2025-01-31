@@ -21,7 +21,7 @@ class models_genesis_config:
     # hu_max = 1000.0
     scale = 32
     input_rows = 64
-    input_cols = 64 
+    input_cols = 64
     input_deps = 32
     nb_class = 1
     
@@ -33,10 +33,10 @@ class models_genesis_config:
     workers = 10
     max_queue_size = workers * 4
     save_samples = "png"
-    pretrain_epoch = 1000
+    pretrain_epoch = 100
     nb_epoch = 100
     patience = 100
-    lr = 5e-5
+    lr = 1
 
     # image deformation
     nonlinear_rate = 0.9
@@ -47,14 +47,14 @@ class models_genesis_config:
     flip_rate = 0.4
     
     # logs
-    model_path = "pretrained_weights"
+    model_path = "/dss/dssmcmlfs01/pr62la/pr62la-dss-0002/MSc/Hui/MG_ukb"
     if not os.path.exists(model_path):
         os.makedirs(model_path)
     logs_path = os.path.join(model_path, "Logs")
     if not os.path.exists(logs_path):
         os.makedirs(logs_path)
 
-    disable_wandb = False
+    disable_wandb = True
     dataset = "DZNE"
     # dataset = "HOSPITAL"
     # pretrain_dsname = "UKB"

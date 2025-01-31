@@ -160,6 +160,7 @@ for i in range(1,6):
 
     OH_encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
     OH_encoder.fit(np.array(diagnosis).reshape(-1, 1))
+    print(OH_encoder.categories_)
 
     label_train = OH_encoder.transform(np.array(label_train).reshape(-1, 1))
     label_test = OH_encoder.transform(np.array(label_test).reshape(-1, 1))

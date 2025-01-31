@@ -42,7 +42,7 @@ logging.basicConfig(level=logging.INFO)  # Set the logging level to INFO
 img_transforms = [
     tio.RescaleIntensity(out_min_max=(0, 1)),
     tio.CropOrPad((128, 128, 128)),
-    tio.Resize((64, 80, 64)),
+    tio.Resize((64, 64, 64)),
 ]
 transform = tio.Compose(img_transforms)
 
@@ -55,7 +55,7 @@ fivefold_test_precision = []
 fivefold_test_recall = []
 fivefold_test_f1 = []
 
-dataset_name = 'HOSPITAL'
+dataset_name = 'DZNE'
 if dataset_name == 'DZNE':
     data_dir = "/dss/dsshome1/0C/ge79qex2/ModelsGenesis/dataset/DZNE/"
     file_name = "DZNE_CN_FTD_AD.h5"
