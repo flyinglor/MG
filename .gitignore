@@ -23,7 +23,7 @@ pytorch/pretrained_weights/
 pytorch/metrics/
 
 # scripts
-scripts/
+scripts/old/
 
 
 # data
